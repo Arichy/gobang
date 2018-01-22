@@ -1,0 +1,15 @@
+*{
+	font-family: sans-serif;
+}
+h3{
+	text-align: center
+}
+
+#wrap{
+	width: 100%;
+	text-align: center;
+}
+
+#canvas{
+	background-color: rgba(255,0,0,0.3);
+}
