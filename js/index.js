@@ -68,54 +68,8 @@ $(function(){
 	draw();
 
 	let nx=-1,ny=-1;
+	let solidx = -1,solidy = -1;
 	let start = false;
-
-	//鼠标移动时调用shadow函数，提示当前棋的落点位置
-	$(canvas).mousemove(function(e){
-		let {x,y} = getPosition(e);
-		
-		x-=pad;y-=pad;
-		//console.log({x:x,y:y});
-
-		newnx = Math.round(x/(sidelength));
-		newny = Math.round(y/(sidelength));
-		//console.log([nx,ny]);
-
-
-		if(newnx!=nx || newny!=ny){
-			//先清除上一个点
-
-			let coverFlag = false;
-			let shadowFlag = false;
-
-
-			for(let chess of chesses){
-				if(nx==chess.nx && ny==chess.ny){//在已经下了的棋里面找到了马上要被cover的棋子，阻止cover
-					coverFlag = true;
-				}
-				if(newnx==chess.nx && newny==chess.ny){//在已经下了的棋里面找到了马上要被shadow的棋子，阻止shadow
-					shadowFlag = true;
-				}
-
-				if(coverFlag && shadowFlag){
-					break;
-				}
-			}
-
-			if(!coverFlag){
-				cover(nx,ny);
-			}
-		
-			//再绘制当前点
-			nx = newnx;
-			ny = newny;
-
-			if(!shadowFlag){
-				shadow(nowPlayer,nx,ny);
-			}
-			
-		}
-	});
 
 	function getPosition(e){//获取鼠标在canvas上的坐标
 		let x = e.pageX - canvas.offsetLeft;
@@ -128,19 +82,7 @@ $(function(){
 		this.player = player;
 		this.nx = nx;
 		this.ny = ny;
-	}
-
-	$(canvas).click(function(e){
-		if(place(nowPlayer,nx,ny)){
-			console.log(nx,ny);
-			if(detection(chessBoard,nx,ny,nowPlayer)){
-				alert(`${nowPlayer===0?'黑棋':'白棋'}胜利！`);
-			}
-			nowPlayer==0?(nowPlayer=1):(nowPlayer=0);
-		}
-		
-		
-	});
+	}	
 
 	function shadow(player,nx,ny){//根据鼠标位置提示下棋位置的幻影
 		ctx.beginPath();
@@ -152,23 +94,19 @@ $(function(){
 	}
 
 	function place(player,nx,ny){//放置一颗棋子 0:黑棋 1:白棋
-		/*for(let chess of chesses){
-			if(nx==chess.nx && ny==chess.ny){//这个位置已经下了棋
-				alert(`该位置已有${chess.player==0?1:2}号玩家的棋子！`);
-				return false;
-			}
-		}*/
 		if(chessBoard[nx][ny]!=-1){
 			alert(`该位置已有${chessBoard[nx][ny]==0?1:2}号玩家的棋子！`);
 			return false;
 		}
 
-		shadow(player,nx,ny);
+		shadow(player,nx,ny);//view
 
 		let chess = new Chess(player,nx,ny);
 		chesses.push(chess);
 
 		chessBoard[nx][ny] = player;
+		solidx = nx;
+		solidy = ny;
 
 		if(player==0){
 			blackChesses.push(chess);
@@ -176,12 +114,6 @@ $(function(){
 			whiteChesses.push(chess);
 		}
 
-		//console.log('黑棋',blackChesses);
-		//console.log('白棋',whiteChesses);
-
-		console.log(chesses);
-	//	console.log(player);
-		console.log(chessBoard);
 		return true;
 		
 	}
@@ -222,55 +154,155 @@ $(function(){
 	// 6,9 6,10 (6,11) 6,12 6,13
 	// 6,10 (6,11) 6,12 6,13 6,14
 	// (6,11) 6,12 6,13 6,14 6,15
+
+	function showWinLine(winLine){//画出赢的那条5子连珠
+		winLine.sort((a,b)=>a[0]-b[0]);
+		console.log(winLine);
+		ctx.beginPath();
+		ctx.moveTo(trans(winLine[0][0]*sidelength),trans(winLine[0][1]*sidelength));
+		ctx.lineTo(trans(winLine[winLine.length-1][0]*sidelength),trans(winLine[winLine.length-1][1]*sidelength));
+		ctx.strokeStyle = 'lime';
+		ctx.stroke();
+		ctx.closePath();
+	}
 	
 	function detection(chessBoard,nx,ny,nowPlayer){//x,y为这一次下的棋
 		let flag1,flag2,flag3,flag4;
 
 		for(let i=0;i<5;i++){
-			flag1 = true;
-			for(let j=ny-4+i;j<ny+i+1;j++){//竖直方向
+			let winLine = [];
+
+			flag1 = true;//竖直方向
+			for(let j=ny-4+i;j<ny+i+1;j++){
+				winLine.push([nx,j]);
 				if(chessBoard[nx][j]!=nowPlayer){
+					winLine.length = 0;
 					flag1 = false;
 					break;
 				}
 			}
 			if(flag1){
+				showWinLine(winLine);
 				return true;
 			}
 
-			flag2 = true;
-			for(let j=nx-4+i;j<nx+i+1;j++){//水平方向
+			flag2 = true;//水平方向
+			for(let j=nx-4+i;j<nx+i+1;j++){
+				winLine.push([j,ny]);
 				if(chessBoard[j][ny]!=nowPlayer){
+					winLine.length = 0;
 					flag2 = false;
 					break;
 				}
 			}
 			if(flag2){
+				showWinLine(winLine);
 				return true;
 			}
 
-			flag3 = true;
-			flag4 = true;
-
-			
+			flag3 = true;// \方向
 			for(let j=0;j<5;j++){
-				if(chessBoard[nx-j+i][ny-j+i]!=nowPlayer){// \方向
+				winLine.push([nx-j+i,ny-j+i]);
+				if(chessBoard[nx-j+i][ny-j+i]!=nowPlayer){
+					winLine.length = 0;
 					flag3 = false;
-				}
-				
-				if(chessBoard[nx-j+i][ny+j-i]!=nowPlayer){// /方向
-					flag4 = false;
-				}
-
-				if(!flag3 && !flag4){
 					break;
 				}
 			}
+			if(flag3){
+				showWinLine(winLine);
+				return true;
+			}
 
-			if(flag3 || flag4){
+			flag4 = true;// /方向
+			for(let j=0;j<5;j++){				
+				winLine.push([nx-j+i,ny+j-i]);
+				if(chessBoard[nx-j+i][ny+j-i]!=nowPlayer){
+					winLine.length = 0;
+					flag4 = false;
+					break;
+				}
+			}
+			if(flag4){
+				showWinLine(winLine);
 				return true;
 			}
 		}
 	}
+
+	let mousemoveHandler,clickHandler;
+	//鼠标移动时调用shadow函数，提示当前棋的落点位置
+	$(canvas).on('mousemove',mousemoveHandler = function (e){
+		let {x,y} = getPosition(e);
+		
+		x-=pad;y-=pad;
+
+		newnx = Math.round(x/(sidelength));
+		newny = Math.round(y/(sidelength));
+		//console.log([nx,ny]);
+
+		if(newnx!=nx || newny!=ny){
+			//先清除上一个点
+			if(chessBoard[nx][ny]==-1){//当要cover的格子上没有棋子才cover
+				cover(nx,ny);
+			}
+		
+			//再绘制当前点
+			nx = newnx;
+			ny = newny;
+			if(chessBoard[nx][ny]==-1){
+				shadow(nowPlayer,nx,ny);
+			}
+		}
+	});
+
+	$(canvas).on('click',clickHandler = function (e){//点击事件的handler
+		if(place(nowPlayer,nx,ny)){
+			if(detection(chessBoard,nx,ny,nowPlayer)){//分出胜负
+				$(this).trigger("win");
+				let winner = nowPlayer==0?'黑棋':'白棋';
+				alert(`${winner}胜利！`);
+				$('#player').text(`${winner}胜利`);
+				$('#regret').attr('disabled',true);
+			} else{//未分出胜负，成功下棋
+				$('#regret').attr('disabled',false);
+				nowPlayer = Number(!nowPlayer);
+
+				if(nowPlayer==0){
+					$('#player').text('黑棋');
+					$('#regret').removeClass('button-inverse');
+				} else{
+					$('#player').text('白棋');
+					$('#regret').addClass('button-inverse')
+				}
+				
+
+			}
+		}
+		console.log(nowPlayer);
+	});
+
+	$(canvas).on('win',function winHandler(e){
+		$(canvas).off('mousemove',mousemoveHandler);
+		$(canvas).off('click',clickHandler);
+	});
+
+	$('#regret').on('click',function(e){
+		cover(solidx,solidy);//view
+		
+		chesses.pop();
+		if(nowPlayer==0){
+			whiteChesses.pop();
+		} else{
+			blackChesses.pop();
+		}
+
+		chessBoard[solidx][solidy] = -1;//真正有用的一行
+
+		nowPlayer = Number(!nowPlayer);
+		$('#player').text(nowPlayer==0?'黑棋':'白棋');
+
+		$(this).attr('disabled',true);
+	});
 
 });

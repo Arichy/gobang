@@ -4,14 +4,23 @@
 	<title>五子棋</title>
 	<meta charset="utf-8">
 	<link rel="stylesheet" type="text/css" href="./css/index.css">
+	<link rel="stylesheet" type="text/css" href="./css/button.css">
 	<script type="text/javascript" src="./js/jQuery.js"></script>
 	<script type="text/javascript" src="./js/index.js"></script>
 </head>
-<body>
-	<h3>五子棋Offline</h3>
+<body background="url(./img/bg.jpg)">
+	<h1>五子棋Offline</h1>
+
 	<div id="wrap">
 		<canvas id="canvas"></canvas>
 	</div>
+
+	<div id="playerWrap">
+		<h2>当前玩家:</h2><h2 id="player">黑棋</h2>
+		<button id="regret" class="button button-raised button-pill button-inverse" disabled="true">悔棋</button>
+	</div>
+
+	
 	
 </body>
 </html>

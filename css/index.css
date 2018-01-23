@@ -1,15 +1,35 @@
 *{
 	font-family: sans-serif;
 }
-h3{
+h1{
 	text-align: center
+}
+
+#playerWrap{
+	display: inline;
+	position: absolute;
+	margin-left: 10%;
+}
+#playerWrap *{
+	display: inline-block;
 }
 
 #wrap{
 	width: 100%;
 	text-align: center;
+	display: inline;
+	margin-left: 10%;
 }
 
 #canvas{
+	display: inline;
 	/*background-color: rgba(255,0,0,0.3);*/
+}
+
+#regret{
+	display: block;
+}
+
+body{
+	background: url(../img/bg.jpg);
 }
