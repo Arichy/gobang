@@ -15,7 +15,16 @@ $(function(){
 	const chesses = [];//储存已经下了的棋子
 	const blackChesses = [];//储存已经下了的黑棋子
 	const whiteChesses = [];//储存已经下了的白棋子
+	const chessBoard = [];//储存棋盘状态
+	for(let i=-4;i<col+1+4;i++){//四周多出来4格，防止detection报错
+		chessBoard[i] = [];
+		for(let j=-4;j<row+1+4;j++){
+			chessBoard[i][j] = -1;//每一个格子初始化为-1
+		}
+	}
+	
 	let nowPlayer = 0;//默认黑棋先手
+	let winner = -1;
 
 	//获得canvas DOM
 	const canvas = document.getElementById('canvas');
@@ -123,8 +132,13 @@ $(function(){
 
 	$(canvas).click(function(e){
 		if(place(nowPlayer,nx,ny)){
+			console.log(nx,ny);
+			if(detection(chessBoard,nx,ny,nowPlayer)){
+				alert(`${nowPlayer===0?'黑棋':'白棋'}胜利！`);
+			}
 			nowPlayer==0?(nowPlayer=1):(nowPlayer=0);
 		}
+		
 		
 	});
 
@@ -138,17 +152,36 @@ $(function(){
 	}
 
 	function place(player,nx,ny){//放置一颗棋子 0:黑棋 1:白棋
-		for(let chess of chesses){
+		/*for(let chess of chesses){
 			if(nx==chess.nx && ny==chess.ny){//这个位置已经下了棋
 				alert(`该位置已有${chess.player==0?1:2}号玩家的棋子！`);
 				return false;
 			}
+		}*/
+		if(chessBoard[nx][ny]!=-1){
+			alert(`该位置已有${chessBoard[nx][ny]==0?1:2}号玩家的棋子！`);
+			return false;
 		}
 
 		shadow(player,nx,ny);
-		chesses.push(new Chess(player,nx,ny));
+
+		let chess = new Chess(player,nx,ny);
+		chesses.push(chess);
+
+		chessBoard[nx][ny] = player;
+
+		if(player==0){
+			blackChesses.push(chess);
+		} else{
+			whiteChesses.push(chess);
+		}
+
+		//console.log('黑棋',blackChesses);
+		//console.log('白棋',whiteChesses);
+
 		console.log(chesses);
-		console.log(player);
+	//	console.log(player);
+		console.log(chessBoard);
 		return true;
 		
 	}
@@ -183,9 +216,60 @@ $(function(){
 		}
 	}
 
-	function detection(){//检测当前是否有玩家胜利
-		for(let blackChess of blackChesses){//遍历黑棋数组
+	// nx==6,ny==11 竖直方向 nx不变
+	// 6,7 6,8 6,9 6,10 (6,11)
+	// 6,8 6,9 6,10 (6,11) 6,12
+	// 6,9 6,10 (6,11) 6,12 6,13
+	// 6,10 (6,11) 6,12 6,13 6,14
+	// (6,11) 6,12 6,13 6,14 6,15
+	
+	function detection(chessBoard,nx,ny,nowPlayer){//x,y为这一次下的棋
+		let flag1,flag2,flag3,flag4;
+
+		for(let i=0;i<5;i++){
+			flag1 = true;
+			for(let j=ny-4+i;j<ny+i+1;j++){//竖直方向
+				if(chessBoard[nx][j]!=nowPlayer){
+					flag1 = false;
+					break;
+				}
+			}
+			if(flag1){
+				return true;
+			}
+
+			flag2 = true;
+			for(let j=nx-4+i;j<nx+i+1;j++){//水平方向
+				if(chessBoard[j][ny]!=nowPlayer){
+					flag2 = false;
+					break;
+				}
+			}
+			if(flag2){
+				return true;
+			}
+
+			flag3 = true;
+			flag4 = true;
+
 			
+			for(let j=0;j<5;j++){
+				if(chessBoard[nx-j+i][ny-j+i]!=nowPlayer){// \方向
+					flag3 = false;
+				}
+				
+				if(chessBoard[nx-j+i][ny+j-i]!=nowPlayer){// /方向
+					flag4 = false;
+				}
+
+				if(!flag3 && !flag4){
+					break;
+				}
+			}
+
+			if(flag3 || flag4){
+				return true;
+			}
 		}
 	}
 
