@@ -256,7 +256,9 @@ $(function(){
 			if(detection(chessBoard,nx,ny,nowPlayer)){//分出胜负
 				$(this).trigger("win");
 				let winner = nowPlayer==0?'黑棋':'白棋';
-				alert(`${winner}胜利！`);
+				if(confirm(`${winner}胜利！\n再玩一局？`)){
+					window.location.reload();
+				}
 				$('#player').text(`${winner}胜利`);
 				$('#regret').attr('disabled',true);
 			} else{//未分出胜负，成功下棋
